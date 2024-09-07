@@ -6,20 +6,20 @@ type Transaction struct {
 }
 
 type TemplateData struct {
-	TotalBalance        float32
-	AverageDebitAmount  float32
-	AverageCreditAmount float32
-	TxnsJanuary         int
-	TxnsFebruary        int
-	TxnsMarch           int
-	TxnsApril           int
-	TxnsMay             int
-	TxnsJune            int
-	TxnsJuly            int
-	TxnsAgust           int
-	TxnsSeptember       int
-	TxnsOctober         int
-	TxnsNovember        int
-	TxnsDecember        int
-	ImageSrc            string
+	TotalBalance  float32
+	AverageDebit  float32
+	AverageCredit float32
+	TxnsJanuary   int
+	TxnsFebruary  int
+	TxnsMarch     int
+	TxnsApril     int
+	TxnsMay       int
+	TxnsJune      int
+	TxnsJuly      int
+	TxnsAgust     int
+	TxnsSeptember int
+	TxnsOctober   int
+	TxnsNovember  int
+	TxnsDecember  int
+	ImageSrc      string
 }
