@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -60,7 +61,7 @@ func (b *Balance) ProccessFile() ([]*models.Transaction, error) {
 		}
 	}
 
-	log.Println("the file was proccessed.")
+	log.Println("the file was proccessed")
 	return txns, err
 }
 
@@ -91,7 +92,7 @@ func (b *Balance) GetBalanceInfo(txns []*models.Transaction) (*models.BalanceInf
 	averageDebit := totalDebit / float32(len(debitTxns))
 	averageCredit := totalCredit / float32(len(creditTxns))
 
-	log.Println("the balance was calculated.")
+	log.Println("the balance was calculated")
 	return &models.BalanceInfo{
 		TotalBalance:  totalBalance,
 		AverageDebit:  averageDebit,
@@ -112,21 +113,32 @@ func (b *Balance) GetBalanceInfo(txns []*models.Transaction) (*models.BalanceInf
 	}, nil
 }
 
-func (b *Balance) InsertDataIntoDB(ctx context.Context, txns []*models.Transaction) {
-	defer repository.Close()
+func (b *Balance) InsertDataIntoDB(ctx context.Context, wg *sync.WaitGroup, txns []*models.Transaction) {
+	defer wg.Done()
 
 	customerId, err := repository.InsertCustomerInfo(ctx, b.CustomerInfo)
 	if err != nil {
 		log.Printf("error trying to insert data into DB. %v\n", err)
+		return
 	}
-	log.Println("the customer info was inserted into DB.")
+	log.Println("the customer info was inserted into DB")
+
 	for _, txn := range txns {
-		err := repository.InsertTransaction(ctx, customerId, txn)
+		err = repository.InsertTransaction(ctx, customerId, txn)
 		if err != nil {
 			log.Printf("error trying to insert data into DB. %v\n", err)
 		}
 	}
-	log.Println("the transactions were inserted into DB.")
+	if err == nil {
+		log.Println("the transactions were inserted into DB")
+	}
+
+	err = repository.Close()
+	if err != nil {
+		log.Printf("error closing the DB conection. %v\n", err)
+	} else {
+		log.Println("the DB conection was closed")
+	}
 }
 
 func getMothsTxn(date string) int {

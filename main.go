@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -65,9 +66,12 @@ func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
 	}
 	emailClient := notifications.NewEmailClient(emailClientConfig, balanceInfo)
 
-	go serviceBalance.InsertDataIntoDB(ctx, txns)
-
-	go emailClient.SendNotification(ctx, event)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go serviceBalance.InsertDataIntoDB(ctx, &wg, txns)
+	wg.Add(1)
+	go emailClient.SendNotification(ctx, &wg, event)
+	wg.Wait()
 }
 
 func createRepository(config *config) (*database.MysqlRepository, error) {
@@ -122,7 +126,7 @@ func getConfig() (*config, error) {
 		return nil, errors.New("sender email password file is required")
 	}
 
-	log.Println("the config was created.")
+	log.Println("the config was created")
 	return &config{
 		dbName:          dbName,
 		dbHost:          dbHost,

@@ -5,6 +5,7 @@ import (
 	"challenge/balance/models"
 	"context"
 	"log"
+	"sync"
 	"text/template"
 
 	"gopkg.in/gomail.v2"
@@ -28,7 +29,9 @@ func NewEmailClient(config *Config, balanceInfo *models.BalanceInfo) *EmailClien
 	}
 }
 
-func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models.CustomerInfo) {
+func (e *EmailClient) SendNotification(ctx context.Context, wg *sync.WaitGroup, customerInfo *models.CustomerInfo) {
+	defer wg.Done()
+
 	body, err := e.createTemplate()
 	if err != nil {
 		log.Printf("error sending email. %v\n", err)
@@ -44,9 +47,9 @@ func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models
 	err = dial.DialAndSend(mail)
 	if err != nil {
 		log.Printf("error sending email. %v\n", err)
+	} else {
+		log.Println("email was sent successfully")
 	}
-
-	log.Println("email was sent successfully")
 }
 
 func (e *EmailClient) createTemplate() (bytes.Buffer, error) {
