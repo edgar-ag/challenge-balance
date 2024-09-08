@@ -1,5 +1,11 @@
 package models
 
+type CustomerInfo struct {
+	AccountNumber string
+	CustomerName  string
+	Email         string
+}
+
 type Transaction struct {
 	Amount string
 	Date   string
@@ -22,4 +28,5 @@ type TemplateData struct {
 	TxnsNovember  int
 	TxnsDecember  int
 	ImageSrc      string
+	CustomerName  string
 }
