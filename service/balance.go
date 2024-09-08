@@ -5,7 +5,6 @@ import (
 	"challenge/balance/repository"
 	"context"
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -145,7 +144,7 @@ func getMothsTxn(date string) int {
 	str := strings.Split(date, "/")
 	month, err := strconv.ParseInt(str[0], 10, 16)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return 0
 	}
 	return int(month)
@@ -154,7 +153,7 @@ func getMothsTxn(date string) int {
 func getTxn(record string) float32 {
 	txn, err := strconv.ParseFloat(record, 64)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return 0.0
 	}
 	return float32(txn)

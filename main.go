@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	// "github.com/aws/aws-lambda-go/lambda" //uncomment this dependency if the app runs on AWS
 )
 
 type config struct {
@@ -29,12 +30,16 @@ type config struct {
 }
 
 func main() {
+	//comment the lines 34-39 when the app runs on AWS
 	event := &models.CustomerInfo{
 		AccountNumber: "123456789012345678",
 		Name:          "Juan Perez",
 		Email:         "test@domain.com",
 	}
 	HandleRequest(context.Background(), event)
+
+	//uncomment the line 42 if the app runs on AWS
+	// lambda.Start(HandleRequest)
 }
 
 func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
