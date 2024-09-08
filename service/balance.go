@@ -112,22 +112,21 @@ func (b *Balance) GetBalanceInfo(txns []*models.Transaction) (*models.BalanceInf
 	}, nil
 }
 
-func (b *Balance) InsertDataIntoDB(ctx context.Context, txns []*models.Transaction) error {
+func (b *Balance) InsertDataIntoDB(ctx context.Context, txns []*models.Transaction) {
 	defer repository.Close()
 
 	customerId, err := repository.InsertCustomerInfo(ctx, b.CustomerInfo)
 	if err != nil {
-		return err
+		log.Printf("error trying to insert data into DB. %v\n", err)
 	}
 	log.Println("the customer info was inserted into DB.")
 	for _, txn := range txns {
 		err := repository.InsertTransaction(ctx, customerId, txn)
 		if err != nil {
-			return err
+			log.Printf("error trying to insert data into DB. %v\n", err)
 		}
 	}
 	log.Println("the transactions were inserted into DB.")
-	return nil
 }
 
 func getMothsTxn(date string) int {

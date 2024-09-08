@@ -39,34 +39,35 @@ func main() {
 func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
 	config, err := getConfig()
 	if err != nil {
-		log.Fatalf("Error loading .env file. %v\n", err)
+		log.Fatalf("error loading .env file. %v\n", err)
 	}
 
 	serviceBalance := service.NewBalance(config.txnsFile, event)
 	txns, err := serviceBalance.ProccessFile()
 	if err != nil {
-		log.Fatalf("Error trying to proccess the file. %v\n", err)
+		log.Fatalf("error trying to proccess the file. %v\n", err)
 	}
 	balanceInfo, err := serviceBalance.GetBalanceInfo(txns)
 	if err != nil {
-		log.Fatalf("Error getting balance info. %v\n", err)
+		log.Fatalf("error getting balance info. %v\n", err)
 	}
 
 	repo, err := createRepository(config)
 	if err != nil {
-		log.Fatalf("Error creating conection with DB. %v\n", err)
+		log.Fatalf("error creating conection with DB. %v\n", err)
 	}
 	repository.SetRepository(repo)
-	err = serviceBalance.InsertDataIntoDB(ctx, txns)
-	if err != nil {
-		log.Fatalf("Error trying to insert data into DB. %v\n", err)
-	}
 
-	emailClient := notifications.NewEmailClient(config.smtpUrl, config.senderEmail, config.senderEmailPass, balanceInfo)
-	err = emailClient.SendNotification(ctx, event)
-	if err != nil {
-		log.Fatalf("Error sending email. %v\n", err)
+	emailClientConfig := &notifications.Config{
+		SmtpUrl:         config.smtpUrl,
+		SenderEmail:     config.senderEmail,
+		SenderEmailPass: config.senderEmailPass,
 	}
+	emailClient := notifications.NewEmailClient(emailClientConfig, balanceInfo)
+
+	go serviceBalance.InsertDataIntoDB(ctx, txns)
+
+	go emailClient.SendNotification(ctx, event)
 }
 
 func createRepository(config *config) (*database.MysqlRepository, error) {

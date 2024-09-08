@@ -12,8 +12,8 @@ func TestProccessFile(t *testing.T) {
 		{Amount: "8/2", Date: "-20.46"},
 		{Amount: "8/13", Date: "+10"},
 	}
-	service := NewBalance("txns_test.csv", &models.CustomerInfo{})
-	txns, _ := service.ProccessFile()
+	balance := NewBalance("txns_test.csv", &models.CustomerInfo{})
+	txns, _ := balance.ProccessFile()
 	for i, txn := range txns {
 		if txn.Amount != expectedTxns[i].Amount && txn.Date != expectedTxns[i].Date {
 			t.Errorf("Transaction was incorrect, got %v expected %v", txn, expectedTxns[i])

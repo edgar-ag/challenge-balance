@@ -10,42 +10,43 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type EmailClient struct {
+type Config struct {
 	SmtpUrl         string
 	SenderEmail     string
 	SenderEmailPass string
-	BalanceInfo     *models.BalanceInfo
 }
 
-func NewEmailClient(smtpUrl, senderEmail, senderEmailPass string, balanceInfo *models.BalanceInfo) *EmailClient {
+type EmailClient struct {
+	Config      *Config
+	BalanceInfo *models.BalanceInfo
+}
+
+func NewEmailClient(config *Config, balanceInfo *models.BalanceInfo) *EmailClient {
 	return &EmailClient{
-		SmtpUrl:         smtpUrl,
-		SenderEmail:     senderEmail,
-		SenderEmailPass: senderEmailPass,
-		BalanceInfo:     balanceInfo,
+		Config:      config,
+		BalanceInfo: balanceInfo,
 	}
 }
 
-func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models.CustomerInfo) error {
+func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models.CustomerInfo) {
 	body, err := e.createTemplate()
 	if err != nil {
-		return err
+		log.Printf("error sending email. %v\n", err)
 	}
 
 	mail := gomail.NewMessage()
-	mail.SetHeader("From", e.SenderEmail)
+	mail.SetHeader("From", e.Config.SenderEmail)
 	mail.SetHeader("To", customerInfo.Email)
 	mail.SetHeader("Subject", "Balance Info")
 	mail.SetBody("text/html", body.String())
 
-	dial := gomail.NewDialer(e.SmtpUrl, 587, e.SenderEmail, e.SenderEmailPass)
+	dial := gomail.NewDialer(e.Config.SmtpUrl, 587, e.Config.SenderEmail, e.Config.SenderEmailPass)
 	err = dial.DialAndSend(mail)
 	if err != nil {
-		return err
+		log.Printf("error sending email. %v\n", err)
 	}
 
 	log.Println("email was sent successfully")
-	return nil
 }
 
 func (e *EmailClient) createTemplate() (bytes.Buffer, error) {
