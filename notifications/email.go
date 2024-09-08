@@ -27,7 +27,7 @@ func NewEmailClient(smtpUrl, senderEmail, senderEmailPass string, balanceInfo *m
 }
 
 func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models.CustomerInfo) error {
-	body, err := createTemplate(e.BalanceInfo)
+	body, err := e.createTemplate()
 	if err != nil {
 		return err
 	}
@@ -43,22 +43,24 @@ func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models
 	if err != nil {
 		return err
 	}
+
 	log.Println("email was sent successfully")
 	return nil
 }
 
-func createTemplate(balanceInfo *models.BalanceInfo) (bytes.Buffer, error) {
+func (e *EmailClient) createTemplate() (bytes.Buffer, error) {
 	var body bytes.Buffer
-	balanceInfo.ImageSrc = "./notifications/stori.png"
+	e.BalanceInfo.ImageSrc = "./notifications/stori.png"
 	emailTemplate, err := template.ParseFiles("./notifications/template.html")
 	if err != nil {
 		return body, err
 	}
 
-	err = emailTemplate.Execute(&body, balanceInfo)
+	err = emailTemplate.Execute(&body, e.BalanceInfo)
 	if err != nil {
 		return body, err
 	}
+
 	log.Println("the email template was created successfully")
 	return body, nil
 }

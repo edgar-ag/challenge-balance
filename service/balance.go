@@ -113,16 +113,20 @@ func (b *Balance) GetBalanceInfo(txns []*models.Transaction) (*models.BalanceInf
 }
 
 func (b *Balance) InsertDataIntoDB(ctx context.Context, txns []*models.Transaction) error {
+	defer repository.Close()
+
 	customerId, err := repository.InsertCustomerInfo(ctx, b.CustomerInfo)
 	if err != nil {
 		return err
 	}
+	log.Println("the customer info was inserted into DB.")
 	for _, txn := range txns {
 		err := repository.InsertTransaction(ctx, customerId, txn)
 		if err != nil {
 			return err
 		}
 	}
+	log.Println("the transactions were inserted into DB.")
 	return nil
 }
 

@@ -42,12 +42,12 @@ func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
 		log.Fatalf("Error loading .env file. %v\n", err)
 	}
 
-	balanceService := service.NewBalance(config.txnsFile, event)
-	txns, err := balanceService.ProccessFile()
+	serviceBalance := service.NewBalance(config.txnsFile, event)
+	txns, err := serviceBalance.ProccessFile()
 	if err != nil {
 		log.Fatalf("Error trying to proccess the file. %v\n", err)
 	}
-	balanceInfo, err := balanceService.GetBalanceInfo(txns)
+	balanceInfo, err := serviceBalance.GetBalanceInfo(txns)
 	if err != nil {
 		log.Fatalf("Error getting balance info. %v\n", err)
 	}
@@ -57,7 +57,7 @@ func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
 		log.Fatalf("Error creating conection with DB. %v\n", err)
 	}
 	repository.SetRepository(repo)
-	err = balanceService.InsertDataIntoDB(ctx, txns)
+	err = serviceBalance.InsertDataIntoDB(ctx, txns)
 	if err != nil {
 		log.Fatalf("Error trying to insert data into DB. %v\n", err)
 	}

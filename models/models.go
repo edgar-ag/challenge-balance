@@ -1,9 +1,9 @@
 package models
 
 type CustomerInfo struct {
-	AccountNumber string
-	Name          string
-	Email         string
+	AccountNumber string `json:"accountNumber"`
+	Name          string `json:"name"`
+	Email         string `json:"email"`
 }
 
 type Transaction struct {

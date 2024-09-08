@@ -23,7 +23,7 @@ func NewMysqlRepository(url string) (*MysqlRepository, error) {
 // Find if the customer info already exists.
 func (r *MysqlRepository) GetCustomerId(ctx context.Context, customerInfo *models.CustomerInfo) (int64, error) {
 	var customerId int64
-	query := "SELECT id FROM customer WHERE account_number = ? AND name = ? AND email = ?"
+	query := "SELECT id FROM customer WHERE account_number = ? AND customer_name = ? AND email = ?"
 	err := r.db.QueryRowContext(ctx, query, customerInfo.AccountNumber, customerInfo.Name, customerInfo.Email).Scan(&customerId)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -45,7 +45,7 @@ func (r *MysqlRepository) InsertCustomerInfo(ctx context.Context, customerInfo *
 		return customerId, nil
 	}
 
-	query := "INSERT INTO customer (account_number, name, email) VALUES (?, ?, ?)"
+	query := "INSERT INTO customer (account_number, customer_name, email) VALUES (?, ?, ?)"
 	result, err := r.db.ExecContext(ctx, query, customerInfo.AccountNumber, customerInfo.Name, customerInfo.Email)
 	if err != nil {
 		return 0, err
@@ -57,9 +57,9 @@ func (r *MysqlRepository) InsertCustomerInfo(ctx context.Context, customerInfo *
 	return customerId, nil
 }
 
-func (r *MysqlRepository) InsertTransaction(ctx context.Context, accountId int64, txn *models.Transaction) error {
-	query := "INSERT INTO transaction (account_id, transaction, date) VALUES (?, ?, ?)"
-	_, err := r.db.ExecContext(ctx, query, accountId, txn.Amount, txn.Date)
+func (r *MysqlRepository) InsertTransaction(ctx context.Context, customerId int64, txn *models.Transaction) error {
+	query := "INSERT INTO transaction (customer_id, txn, txn_date) VALUES (?, ?, ?)"
+	_, err := r.db.ExecContext(ctx, query, customerId, txn.Amount, txn.Date)
 	if err != nil {
 		return err
 	}
