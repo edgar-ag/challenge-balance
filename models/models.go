@@ -2,7 +2,7 @@ package models
 
 type CustomerInfo struct {
 	AccountNumber string
-	CustomerName  string
+	Name          string
 	Email         string
 }
 
@@ -11,7 +11,7 @@ type Transaction struct {
 	Date   string
 }
 
-type TemplateData struct {
+type BalanceInfo struct {
 	TotalBalance  float32
 	AverageDebit  float32
 	AverageCredit float32

@@ -2,8 +2,11 @@ package service
 
 import (
 	"challenge/balance/models"
+	"challenge/balance/repository"
+	"context"
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -16,9 +19,21 @@ const (
 	RegexTxn    = `^[+-]?\d+(\.\d+)?`
 )
 
-func ProccessFile(txnsFile string) ([]*models.Transaction, error) {
+type Balance struct {
+	TxnsFile     string
+	CustomerInfo *models.CustomerInfo
+}
+
+func NewBalance(txnsFile string, customerInfo *models.CustomerInfo) *Balance {
+	return &Balance{
+		TxnsFile:     txnsFile,
+		CustomerInfo: customerInfo,
+	}
+}
+
+func (b *Balance) ProccessFile() ([]*models.Transaction, error) {
 	var txns []*models.Transaction
-	file, err := os.Open(directory + txnsFile)
+	file, err := os.Open(directory + b.TxnsFile)
 	if err != nil {
 		return txns, err
 	}
@@ -44,10 +59,12 @@ func ProccessFile(txnsFile string) ([]*models.Transaction, error) {
 			txns = append(txns, txn)
 		}
 	}
+
+	log.Println("the file was proccessed.")
 	return txns, err
 }
 
-func GetBalance(txns []*models.Transaction) (*models.TemplateData, error) {
+func (b *Balance) GetBalanceInfo(txns []*models.Transaction) (*models.BalanceInfo, error) {
 	var debitTxns []float32
 	var creditTxns []float32
 	txnsPerMonth := []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -74,7 +91,8 @@ func GetBalance(txns []*models.Transaction) (*models.TemplateData, error) {
 	averageDebit := totalDebit / float32(len(debitTxns))
 	averageCredit := totalCredit / float32(len(creditTxns))
 
-	return &models.TemplateData{
+	log.Println("the balance was calculated.")
+	return &models.BalanceInfo{
 		TotalBalance:  totalBalance,
 		AverageDebit:  averageDebit,
 		AverageCredit: averageCredit,
@@ -90,7 +108,22 @@ func GetBalance(txns []*models.Transaction) (*models.TemplateData, error) {
 		TxnsOctober:   txnsPerMonth[9],
 		TxnsNovember:  txnsPerMonth[10],
 		TxnsDecember:  txnsPerMonth[11],
+		CustomerName:  b.CustomerInfo.Name,
 	}, nil
+}
+
+func (b *Balance) InsertDataIntoDB(ctx context.Context, txns []*models.Transaction) error {
+	customerId, err := repository.InsertCustomerInfo(ctx, b.CustomerInfo)
+	if err != nil {
+		return err
+	}
+	for _, txn := range txns {
+		err := repository.InsertTransaction(ctx, customerId, txn)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getMothsTxn(date string) int {

@@ -14,20 +14,20 @@ type EmailClient struct {
 	SmtpUrl         string
 	SenderEmail     string
 	SenderEmailPass string
-	TemplateData    *models.TemplateEmail
+	BalanceInfo     *models.BalanceInfo
 }
 
-func NewEmailClient(smtpUrl, senderEmail, senderEmailPass string, templateData *models.TemplateEmail) *EmailClient {
+func NewEmailClient(smtpUrl, senderEmail, senderEmailPass string, balanceInfo *models.BalanceInfo) *EmailClient {
 	return &EmailClient{
 		SmtpUrl:         smtpUrl,
 		SenderEmail:     senderEmail,
 		SenderEmailPass: senderEmailPass,
-		TemplateData:    templateData,
+		BalanceInfo:     balanceInfo,
 	}
 }
 
 func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models.CustomerInfo) error {
-	body, err := createTemplate(e.TemplateData)
+	body, err := createTemplate(e.BalanceInfo)
 	if err != nil {
 		return err
 	}
@@ -47,17 +47,18 @@ func (e *EmailClient) SendNotification(ctx context.Context, customerInfo *models
 	return nil
 }
 
-func createTemplate(templateData *models.TemplateEmail) (bytes.Buffer, error) {
+func createTemplate(balanceInfo *models.BalanceInfo) (bytes.Buffer, error) {
 	var body bytes.Buffer
-	templateData.ImageSrc = "./notifications/stori.png"
+	balanceInfo.ImageSrc = "./notifications/stori.png"
 	emailTemplate, err := template.ParseFiles("./notifications/template.html")
 	if err != nil {
 		return body, err
 	}
 
-	err = emailTemplate.Execute(&body, templateData)
+	err = emailTemplate.Execute(&body, balanceInfo)
 	if err != nil {
 		return body, err
 	}
+	log.Println("the email template was created successfully")
 	return body, nil
 }

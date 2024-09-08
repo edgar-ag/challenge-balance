@@ -1,11 +1,14 @@
 package main
 
 import (
+	"challenge/balance/database"
 	"challenge/balance/models"
 	"challenge/balance/notifications"
+	"challenge/balance/repository"
 	"challenge/balance/service"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
@@ -27,7 +30,7 @@ type config struct {
 func main() {
 	event := &models.CustomerInfo{
 		AccountNumber: "123456789012345678",
-		CustomerName:  "Juan Perez",
+		Name:          "Juan Perez",
 		Email:         "test@domain.com",
 	}
 	HandleRequest(context.Background(), event)
@@ -38,27 +41,41 @@ func HandleRequest(ctx context.Context, event *models.CustomerInfo) {
 	if err != nil {
 		log.Fatalf("Error loading .env file. %v\n", err)
 	}
-	log.Println("the config was created.")
 
-	txns, err := service.ProccessFile(config.txnsFile)
+	balanceService := service.NewBalance(config.txnsFile, event)
+	txns, err := balanceService.ProccessFile()
 	if err != nil {
 		log.Fatalf("Error trying to proccess the file. %v\n", err)
 	}
-	log.Println("the file was proccessed.")
-
-	dataTemplate, err := service.GetBalance(txns)
+	balanceInfo, err := balanceService.GetBalanceInfo(txns)
 	if err != nil {
-		log.Fatalf("Error getting the balance. %v\n", err)
+		log.Fatalf("Error getting balance info. %v\n", err)
 	}
-	log.Println("the balance was calculated.")
 
-	dataTemplate.CustomerName = event.CustomerName
-	emailClient := notifications.NewEmailClient(config.smtpUrl, config.senderEmail, config.senderEmailPass, dataTemplate)
+	repo, err := createRepository(config)
+	if err != nil {
+		log.Fatalf("Error creating conection with DB. %v\n", err)
+	}
+	repository.SetRepository(repo)
+	err = balanceService.InsertDataIntoDB(ctx, txns)
+	if err != nil {
+		log.Fatalf("Error trying to insert data into DB. %v\n", err)
+	}
+
+	emailClient := notifications.NewEmailClient(config.smtpUrl, config.senderEmail, config.senderEmailPass, balanceInfo)
 	err = emailClient.SendNotification(ctx, event)
 	if err != nil {
 		log.Fatalf("Error sending email. %v\n", err)
 	}
+}
 
+func createRepository(config *config) (*database.MysqlRepository, error) {
+	dbUrl := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.dbUser, config.dbPass, config.dbHost, config.dbPort, config.dbName)
+	repository, err := database.NewMysqlRepository(dbUrl)
+	if err != nil {
+		return nil, err
+	}
+	return repository, nil
 }
 
 func getConfig() (*config, error) {
@@ -104,6 +121,7 @@ func getConfig() (*config, error) {
 		return nil, errors.New("sender email password file is required")
 	}
 
+	log.Println("the config was created.")
 	return &config{
 		dbName:          dbName,
 		dbHost:          dbHost,
