@@ -28,7 +28,7 @@ cd database
 docker run -it --rm -p 3306:3306 --name database mysql:v1
 docker network connect local_network database
 ```
--Build and run Go application image.
+- Build and run Go application image.
 ```sh 
 cd ..
 docker build -t golang:v1 .
