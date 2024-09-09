@@ -10,9 +10,9 @@ This is a Go application that processes a file from a mounted directory and send
 The application can be run in Docker containers or deployed to AWS Lambda.
 
 ### Clone the Repository
-```sh
-git clone https://github.com/yourusername/your-repo.git
-cd balance
+```sh 
+git clone git@github.com:edgar-ag/challenge-balance.git
+cd challenge-balance
 ```
 
 ### Run the app on Containers
@@ -25,12 +25,17 @@ docker network create local_network
 - Build and run mysql image.
 ```sh 
 cd database
+docker build -t mysql:v1 .
 docker run -it --rm -p 3306:3306 --name database mysql:v1
+```
+To connect the database container to the same network, execute this code in another terminal:
+```sh 
 docker network connect local_network database
 ```
+
 - Build and run Go application image.
 ```sh 
-cd ..
+cd challenge-balance
 docker build -t golang:v1 .
 docker run -it --rm --network local_network --name balance golang:v1
 ```
@@ -43,6 +48,7 @@ Follow these steps to deploy the application to AWS Lambda:
     Uncomment line 42
 - Install the AWS Lambda Go SDK
 ```sh 
+cd challenge-balance
 go get "github.com/aws/aws-lambda-go v1.47.0" 
 ```
 - Build the application.
